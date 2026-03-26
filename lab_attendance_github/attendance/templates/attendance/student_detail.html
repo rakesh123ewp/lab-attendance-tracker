@@ -1,0 +1,15 @@
+{% extends 'attendance/base.html' %}{% block title %}{{ student.name }}{% endblock %}{% block page_title %}Student Detail{% endblock %}{% block content %}
+<div class="row g-4">
+<div class="col-md-4"><div class="card text-center p-4"><div style="font-size:4rem;color:#1a3a6b;" class="mb-3"><i class="fas fa-user-circle"></i></div><h5>{{ student.name }}</h5><p class="text-muted">{{ student.roll_number }}</p><hr>
+<div class="text-start"><p><strong>Dept:</strong> {{ student.department|default:"N/A" }}</p><p><strong>Semester:</strong> {{ student.semester }}</p><p><strong>Email:</strong> {{ student.email|default:"N/A" }}</p>
+<p><strong>Labs:</strong> {% for lab in student.labs.all %}<span class="badge bg-primary me-1">{{ lab.lab_code }}</span>{% empty %}None{% endfor %}</p></div>
+<a href="{% url 'student_edit' student.pk %}" class="btn btn-outline-primary btn-sm w-100">Edit Student</a></div></div>
+<div class="col-md-8">
+<div class="row g-3 mb-4"><div class="col-4"><div class="stat-card text-center"><div class="fs-3 fw-bold">{{ total }}</div><div class="text-muted small">Total</div></div></div>
+<div class="col-4"><div class="stat-card text-center"><div class="fs-3 fw-bold text-success">{{ present }}</div><div class="text-muted small">Present</div></div></div>
+<div class="col-4"><div class="stat-card text-center"><div class="fs-3 fw-bold {% if percentage < 75 %}text-danger{% else %}text-success{% endif %}">{{ percentage }}%</div><div class="text-muted small">Attendance</div></div></div></div>
+<div class="card"><div class="card-header p-3">Attendance History</div><div class="card-body p-0"><table class="table mb-0"><thead><tr><th>Date</th><th>Lab</th><th>Subject</th><th>Status</th></tr></thead><tbody>
+{% for r in records %}<tr><td>{{ r.session.date }}</td><td>{{ r.session.lab.name }}</td><td>{{ r.session.subject|default:"-" }}</td>
+<td>{% if r.status == 'Present' %}<span class="badge-present px-2 py-1 rounded">Present</span>{% else %}<span class="badge-absent px-2 py-1 rounded">Absent</span>{% endif %}</td></tr>
+{% empty %}<tr><td colspan="4" class="text-center text-muted py-3">No records.</td></tr>{% endfor %}
+</tbody></table></div></div></div></div>{% endblock %}

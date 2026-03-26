@@ -1,0 +1,68 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Session Detail{% endblock %}
+{% block page_title %}Session Detail{% endblock %}
+{% block extra_style %}
+.btn-tp{background:#22c55e;color:#fff;border:none;padding:3px 12px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;}
+.btn-ta{background:#ef4444;color:#fff;border:none;padding:3px 12px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-1">{{ session.lab.name }} &mdash; {{ session.date }}</h5>
+        <span class="text-muted small">{% if session.subject %}{{ session.subject }} &nbsp;|&nbsp;{% endif %}By: {{ session.conducted_by.username|default:"N/A" }} &nbsp;|&nbsp;
+        {% if session.is_active %}<span class="text-success fw-bold">🟢 Open for Students</span>{% else %}<span class="text-danger fw-bold">🔴 Closed</span>{% endif %}</span>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <form method="post" action="{% url 'session_toggle_active' session.pk %}" style="display:inline;">{% csrf_token %}
+        {% if session.is_active %}<button type="submit" class="btn btn-sm btn-warning"><i class="fas fa-lock me-1"></i>Close Self-Marking</button>
+        {% else %}<button type="submit" class="btn btn-sm btn-success"><i class="fas fa-unlock me-1"></i>Open for Students</button>{% endif %}
+        </form>
+        <a href="{% url 'mark_attendance' session.pk %}" class="btn btn-sm btn-primary"><i class="fas fa-edit me-1"></i>Edit</a>
+        <a href="{% url 'export_csv' session.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download me-1"></i>CSV</a>
+        <a href="{% url 'session_delete' session.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>Delete</a>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="stat-card text-center"><div class="fs-3 fw-bold">{{ session.total_students }}</div><div class="text-muted small">Total</div></div></div>
+    <div class="col-md-3"><div class="stat-card text-center"><div class="fs-3 fw-bold text-success" id="presentCount">{{ session.present_count }}</div><div class="text-muted small">Present</div></div></div>
+    <div class="col-md-3"><div class="stat-card text-center"><div class="fs-3 fw-bold text-danger" id="absentCount">{{ session.absent_count }}</div><div class="text-muted small">Absent</div></div></div>
+    <div class="col-md-3"><div class="stat-card text-center"><div class="fs-3 fw-bold {% if session.attendance_percentage < 75 %}text-danger{% else %}text-success{% endif %}" id="percentage">{{ session.attendance_percentage }}%</div><div class="text-muted small">Percentage</div></div></div>
+</div>
+<div class="card">
+    <div class="card-header p-3 d-flex justify-content-between"><span><i class="fas fa-list me-2 text-primary"></i>Attendance Records</span><small class="text-muted">Click to update instantly</small></div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead><tr><th>Roll No</th><th>Student Name</th><th>Dept</th><th>Status</th><th>Marked By</th><th>Change</th></tr></thead>
+            <tbody>
+            {% for r in records %}
+            <tr id="tr-{{ r.pk }}" style="background:{% if r.status == 'Present' %}#f0fdf4{% else %}#fff5f5{% endif %}">
+                <td>{{ r.student.roll_number }}</td>
+                <td><a href="{% url 'student_detail' r.student.pk %}">{{ r.student.name }}</a></td>
+                <td>{{ r.student.department|default:"-" }}</td>
+                <td><span id="badge-{{ r.pk }}" style="padding:4px 10px;border-radius:20px;font-size:.82rem;font-weight:600;background:{% if r.status == 'Present' %}#dcfce7{% else %}#fee2e2{% endif %};color:{% if r.status == 'Present' %}#16a34a{% else %}#dc2626{% endif %}">{% if r.status == 'Present' %}✓ Present{% else %}✗ Absent{% endif %}</span></td>
+                <td class="small text-muted">{% if r.marked_by_student %}<i class="fas fa-user me-1"></i>Student{% else %}<i class="fas fa-chalkboard-teacher me-1"></i>Teacher{% endif %}</td>
+                <td>{% if r.status == 'Absent' %}<button class="btn-tp" onclick="toggleStatus({{ r.pk }},'Present')">✓ Present</button>{% else %}<button class="btn-ta" onclick="toggleStatus({{ r.pk }},'Absent')">✗ Absent</button>{% endif %}</td>
+            </tr>
+            {% empty %}<tr><td colspan="6" class="text-center text-muted py-4">No records.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function toggleStatus(id,s){
+    fetch("{% url 'ajax_update_record' %}",{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token }}'},body:'record_id='+id+'&status='+s})
+    .then(r=>r.json()).then(d=>{
+        if(d.success){
+            const row=document.getElementById('tr-'+id),badge=document.getElementById('badge-'+id),btn=row.querySelector('button');
+            if(d.status==='Present'){row.style.background='#f0fdf4';badge.style.background='#dcfce7';badge.style.color='#16a34a';badge.innerHTML='✓ Present';btn.className='btn-ta';btn.innerHTML='✗ Absent';btn.onclick=()=>toggleStatus(id,'Absent');}
+            else{row.style.background='#fff5f5';badge.style.background='#fee2e2';badge.style.color='#dc2626';badge.innerHTML='✗ Absent';btn.className='btn-tp';btn.innerHTML='✓ Present';btn.onclick=()=>toggleStatus(id,'Present');}
+            document.getElementById('presentCount').textContent=d.present_count;
+            document.getElementById('absentCount').textContent=d.absent_count;
+            document.getElementById('percentage').textContent=d.percentage+'%';
+        }
+    });
+}
+</script>
+{% endblock %}

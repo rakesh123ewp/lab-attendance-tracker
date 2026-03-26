@@ -1,0 +1,9 @@
+{% extends 'attendance/base.html' %}{% block title %}Students{% endblock %}{% block page_title %}Students{% endblock %}{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"><h5 class="mb-0">All Students</h5><a href="{% url 'student_create' %}" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i>Add Student</a></div>
+<div class="card mb-4"><div class="card-body py-2"><form method="get" class="d-flex gap-2"><input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name or roll number..."><button class="btn btn-outline-primary">Search</button>{% if q %}<a href="{% url 'student_list' %}" class="btn btn-outline-secondary">Clear</a>{% endif %}</form></div></div>
+<div class="card"><div class="card-body p-0"><table class="table mb-0"><thead><tr><th>Roll No</th><th>Name</th><th>Department</th><th>Semester</th><th>Labs</th><th>Actions</th></tr></thead><tbody>
+{% for s in students %}<tr><td class="fw-semibold">{{ s.roll_number }}</td><td><a href="{% url 'student_detail' s.pk %}">{{ s.name }}</a></td><td>{{ s.department|default:"-" }}</td><td>Sem {{ s.semester }}</td>
+<td>{% for lab in s.labs.all %}<span class="badge bg-secondary me-1">{{ lab.lab_code }}</span>{% empty %}-{% endfor %}</td>
+<td><a href="{% url 'student_detail' s.pk %}" class="btn btn-sm btn-outline-info me-1"><i class="fas fa-eye"></i></a><a href="{% url 'student_edit' s.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></a><a href="{% url 'student_delete' s.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a></td></tr>
+{% empty %}<tr><td colspan="6" class="text-center text-muted py-4">No students found.</td></tr>{% endfor %}
+</tbody></table></div></div>{% endblock %}

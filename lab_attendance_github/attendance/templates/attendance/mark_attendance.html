@@ -1,0 +1,78 @@
+{% extends 'attendance/base.html' %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+{% block extra_style %}
+.attendance-table th{background:#1a3a6b!important;color:#fff;font-size:.82rem;}
+.btn-present{background:#22c55e;color:#fff;border:none;padding:4px 14px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;}
+.btn-absent{background:#ef4444;color:#fff;border:none;padding:4px 14px;border-radius:6px;font-size:.82rem;font-weight:600;cursor:pointer;}
+.btn-present:hover{background:#16a34a;}.btn-absent:hover{background:#dc2626;}
+.status-label{font-weight:700;font-size:.85rem;min-width:55px;display:inline-block;}
+.status-label.present{color:#22c55e;}.status-label.absent{color:#ef4444;}
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h5 class="mb-1">{{ session.lab.name }} &mdash; {{ session.date }}</h5>
+        <span class="text-muted small">{% if session.subject %}Subject: <strong>{{ session.subject }}</strong> &nbsp;|&nbsp;{% endif %}Lab Code: <strong>{{ session.lab.lab_code }}</strong></span>
+    </div>
+    <a href="{% url 'session_detail' session.pk %}" class="btn btn-outline-secondary">View Summary</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body py-2 d-flex gap-3 align-items-center">
+        <span class="text-muted small fw-semibold">Mark All:</span>
+        <button type="button" class="btn btn-sm btn-success" id="markAllPresent"><i class="fas fa-check me-1"></i>All Present</button>
+        <button type="button" class="btn btn-sm btn-danger" id="markAllAbsent"><i class="fas fa-times me-1"></i>All Absent</button>
+        <span class="ms-auto text-muted small" id="summaryText"></span>
+    </div>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table attendance-table mb-0">
+                <thead><tr><th style="width:120px">Roll No</th><th>Student Name</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for record in records %}
+                <tr id="row-{{ record.student.pk }}" style="background:{% if record.status == 'Present' %}#f0fdf4{% else %}#fff5f5{% endif %}">
+                    <td class="fw-semibold">{{ record.student.roll_number }}</td>
+                    <td>{{ record.student.name }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-label {% if record.status == 'Present' %}present{% else %}absent{% endif %}" id="label-{{ record.student.pk }}">{{ record.status }}</span>
+                            <button type="button" class="btn-present" onclick="markStudent({{ record.student.pk }},'Present')">Present</button>
+                            <button type="button" class="btn-absent" onclick="markStudent({{ record.student.pk }},'Absent')">Absent</button>
+                            <input type="checkbox" name="present" value="{{ record.student.pk }}" id="check-{{ record.student.pk }}" {% if record.status == 'Present' %}checked{% endif %} style="display:none;">
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}<tr><td colspan="3" class="text-center text-muted py-4">No students enrolled. <a href="{% url 'student_create' %}">Add students</a>.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if records %}
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary px-5"><i class="fas fa-save me-2"></i>Save Attendance</button>
+        <a href="{% url 'session_detail' session.pk %}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}
+{% block extra_js %}
+<script>
+function markStudent(id,status){
+    document.getElementById('check-'+id).checked=(status==='Present');
+    const l=document.getElementById('label-'+id);l.textContent=status;l.className='status-label '+(status==='Present'?'present':'absent');
+    document.getElementById('row-'+id).style.background=status==='Present'?'#f0fdf4':'#fff5f5';updateSummary();
+}
+function markAll(s){document.querySelectorAll('[id^="check-"]').forEach(c=>markStudent(c.id.replace('check-',''),s));}
+document.getElementById('markAllPresent').onclick=()=>markAll('Present');
+document.getElementById('markAllAbsent').onclick=()=>markAll('Absent');
+function updateSummary(){
+    const t=document.querySelectorAll('[id^="check-"]').length,p=document.querySelectorAll('[id^="check-"]:checked').length;
+    document.getElementById('summaryText').textContent='Present: '+p+' / '+t+'  |  Absent: '+(t-p);
+}
+document.querySelectorAll('[id^="check-"]').forEach(c=>{document.getElementById('row-'+c.id.replace('check-','')).style.background=c.checked?'#f0fdf4':'#fff5f5';});
+updateSummary();
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'attendance/base.html' %}{% block title %}Reports{% endblock %}{% block page_title %}Reports{% endblock %}{% block content %}
+<div class="card mb-4"><div class="card-header p-3"><i class="fas fa-filter me-2"></i>Filter</div><div class="card-body"><form method="get" class="row g-3">
+<div class="col-md-3"><label class="form-label fw-semibold">Lab</label><select name="lab" class="form-control"><option value="">All Labs</option>{% for lab in labs %}<option value="{{ lab.pk }}" {% if selected_lab == lab.pk|stringformat:"s" %}selected{% endif %}>{{ lab.name }}</option>{% endfor %}</select></div>
+<div class="col-md-3"><label class="form-label fw-semibold">From Date</label><input type="date" name="start_date" value="{{ start_date }}" class="form-control"></div>
+<div class="col-md-3"><label class="form-label fw-semibold">To Date</label><input type="date" name="end_date" value="{{ end_date }}" class="form-control"></div>
+<div class="col-md-3 d-flex align-items-end gap-2"><button type="submit" class="btn btn-primary">Apply</button><a href="{% url 'reports' %}" class="btn btn-outline-secondary">Reset</a></div>
+</form></div></div>
+<div class="card"><div class="card-header p-3 d-flex justify-content-between"><span><i class="fas fa-table me-2"></i>Session Report</span><span class="text-muted small">{{ sessions|length }} session(s)</span></div>
+<div class="card-body p-0"><table class="table mb-0"><thead><tr><th>#</th><th>Lab</th><th>Date</th><th>Subject</th><th>Total</th><th>Present</th><th>Absent</th><th>%</th><th>Export</th></tr></thead><tbody>
+{% for s in sessions %}<tr><td>{{ forloop.counter }}</td><td>{{ s.lab.name }}</td><td>{{ s.date }}</td><td>{{ s.subject|default:"-" }}</td><td>{{ s.total_students }}</td>
+<td><span class="badge-present px-2 rounded">{{ s.present_count }}</span></td><td><span class="badge-absent px-2 rounded">{{ s.absent_count }}</span></td>
+<td><span class="fw-semibold {% if s.attendance_percentage < 75 %}text-danger{% else %}text-success{% endif %}">{{ s.attendance_percentage }}%</span></td>
+<td><a href="{% url 'export_csv' s.pk %}" class="btn btn-sm btn-outline-secondary"><i class="fas fa-download me-1"></i>CSV</a></td></tr>
+{% empty %}<tr><td colspan="9" class="text-center text-muted py-4">No sessions found.</td></tr>{% endfor %}
+</tbody></table></div></div>{% endblock %}

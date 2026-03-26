@@ -1,0 +1,7 @@
+{% extends 'attendance/base.html' %}{% block title %}Labs{% endblock %}{% block page_title %}Labs{% endblock %}{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4"><h5 class="mb-0">All Labs</h5><a href="{% url 'lab_create' %}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Add Lab</a></div>
+<div class="card"><div class="card-body p-0"><table class="table mb-0"><thead><tr><th>#</th><th>Lab Name</th><th>Code</th><th>Location</th><th>Capacity</th><th>Students</th><th>Actions</th></tr></thead><tbody>
+{% for lab in labs %}<tr><td>{{ forloop.counter }}</td><td><strong>{{ lab.name }}</strong></td><td><span class="badge bg-primary">{{ lab.lab_code }}</span></td><td>{{ lab.location|default:"-" }}</td><td>{{ lab.capacity }}</td><td>{{ lab.student_count }}</td>
+<td><a href="{% url 'lab_edit' lab.pk %}" class="btn btn-sm btn-outline-primary me-1"><i class="fas fa-edit"></i></a><a href="{% url 'lab_delete' lab.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a></td></tr>
+{% empty %}<tr><td colspan="7" class="text-center text-muted py-4">No labs. <a href="{% url 'lab_create' %}">Add one!</a></td></tr>{% endfor %}
+</tbody></table></div></div>{% endblock %}
